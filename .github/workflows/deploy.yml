@@ -30,8 +30,8 @@ jobs:
 
       - name: Generate Calendar
         run: |
-          mkdir -p ./ics
-          ./ics.sh -v -d "" -l "fr-FR" -- ./data/person > ./ics/fr-FR/$(date +%Y).ics
+          mkdir -p ./ics/fr-FR
+          ./ics.sh -v -d "" -l "fr-FR" > ./ics/fr-FR/$(date +%Y).ics
 
       - name: Upload Pages
         uses: actions/upload-pages-artifact@v4
