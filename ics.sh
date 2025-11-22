@@ -163,7 +163,6 @@ PRODID:-//themoviedb.org//TMDB Birthdays//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:TMDB Birthdays
-X-WR-TIMEZONE:UTC
 X-WR-CALDESC:Birthdays of popular persons from The Movie Database (TMDB)
 EOF
 }
@@ -205,9 +204,7 @@ BEGIN:VEVENT
 CLASS:PUBLIC
 UID:$(date -u -d "$today" +'%Y%m%d')-person-${id}@themoviedb.org
 DTSTAMP:$(date -u +'%Y%m%dT%H%M%SZ')
-DTSTART;VALUE=DATE:$(date -u -d "$today" +'%Y%m%d')T000000Z
-DTEND;VALUE=DATE:$(date -u -d "$tomorrow" +'%Y%m%d')T000000Z
-TRANSP:TRANSPARENT
+DTSTART;VALUE=DATE:$(date -u -d "$today" +'%Y%m%d')
 RRULE:FREQ=YEARLY;INTERVAL=1;BYMONTH=$month;BYMONTHDAY=$day
 X-MICROSOFT-CDO-ALLDAYEVENT:TRUE
 $(printf '%s:%s (%s)' "$(ics_localized "SUMMARY")" "$name" "$birthday" | ics_fold)
