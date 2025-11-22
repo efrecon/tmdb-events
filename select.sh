@@ -96,7 +96,7 @@ error() { _log ERR "$@" && exit 1; }
 # Silence the command passed as an argument.
 silent() { "$@" >/dev/null 2>&1 </dev/null; }
 
-# Use external show.sh to extract keys to match for content
+# Use external show.sh to extract the value of all keys in SELECT_WHERE.
 # $1: path to file where to extract the keys from
 content() {
   SHOW_VERBOSE=$SELECT_VERBOSE \
@@ -106,7 +106,8 @@ content() {
 }
 
 # Use external show.sh to extract value of a given key
-# $1: path to file where to extract the keys from
+# $1: key to extract
+# $2: path to file where to extract the key from
 keyval() {
   SHOW_VERBOSE=$SELECT_VERBOSE \
   SHOW_KEYS=$1 \
@@ -118,17 +119,29 @@ keyval() {
 silent command -v jq || error "jq command not found"
 
 
+# Quickly narrow down files to process using grep on their content.
+# Use a subshell to avoid changing current directory.
+# $1: directory to process
 narrow() (
   cd "${1%%/}"
-  grep -EiHl "$SELECT_QUICK" $SELECT_PATTERN | sed -E "s~^~${1%%/}\/~g"
+  # Grep files matching the quick regex, output full path by readding the
+  # directory prefix using sed.
+  grep -EiHl "$SELECT_QUICK" $SELECT_PATTERN |
+    sed -E "s~^~${1%%/}\/~g"
 )
 
+
+# Extract the content of the keys in SELECT_WHERE. If it matches the regex,
+# print the values of the keys in SELECT_KEYS along with the file path.
+# $1: path to file to process
 print_on_match() {
   if content "$1" | grep -Eiq "$SELECT_REGEX"; then
+    # For all keys to show, extract their value and print them tab separated,
     for key in $SELECT_KEYS; do
       value=$(keyval "$key" "$1")
       printf '%s\t' "$value"
     done
+    # End with the file path itself
     printf '%s' "$1"
     printf '\n'
   else
@@ -141,8 +154,11 @@ if [ "$#" -eq 0 ]; then
   set -- "."
 fi
 
+# When no keys to show are provided, use the same as the keys to filter on.
 [ -z "$SELECT_KEYS" ] && SELECT_KEYS=$SELECT_WHERE
 
+
+# Process all provided paths, which can be directories, files, or "-" for stdin.
 for path; do
   if [ -d "$path" ]; then
     info "Processing directory %s" "$path"
