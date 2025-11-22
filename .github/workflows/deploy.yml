@@ -1,0 +1,50 @@
+name: Generate Calendar
+
+on:
+  push:
+    branches:
+      - main
+      - feature/github-automation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Seed
+        run: |
+          SEED=https://gist.github.com/efrecon/e583f3c33315dbf0e56da0ca9b49a766/raw/db9c73569847e6d38afa856b44e8f6553a49972e/person-fr-FR.tgz.b64
+          mkdir -p ./data/person
+          curl -fsSL --retry 5 --retry-delay 3 "$SEED" |
+            base64 -d |
+            tar -xzvf - -C ./data/person
+
+      - name: Generate Calendar
+        run: |
+          mkdir -p ./ics
+          ./ics.sh -v -d "" -l "fr-FR" -- ./data/person > ./ics/fr-FR/$(date +%Y).ics
+
+      - name: Upload Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./ics
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: generate
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
