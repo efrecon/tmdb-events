@@ -22,6 +22,8 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # values are kept, e.g. (français|francais|french|france)
 : "${SELECT_REGEX:=""}"
 
+: "${SELECT_QUICK:=""}"
+
 # Lines matching this regex will be removed from the content before testing the
 # keys. Useful to remove source lines, e.g. "Source: Wikipedia" that would
 # make too much content to be kept.
@@ -47,7 +49,7 @@ usage() {
 }
 
 # Parse named arguments using getopts
-while getopts ":c:k:r:w:vh-" opt; do
+while getopts ":c:k:r:q:w:vh-" opt; do
   case "$opt" in
     k) # List of JSON keys to show.
       SELECT_KEYS=$OPTARG;;
@@ -55,6 +57,8 @@ while getopts ":c:k:r:w:vh-" opt; do
       SELECT_WHERE=$OPTARG;;
     r) # Regular expression to match values to keep, case insensitive
       SELECT_REGEX=$OPTARG;;
+    q) # Quick filter to narrow down files to process
+      SELECT_QUICK=$OPTARG;;
     c) # Lines matching this regex will be removed from the content before testing the keys
       SELECT_CLEAN=$OPTARG;;
     v) # Increase verbosity each time repeated
@@ -114,6 +118,11 @@ keyval() {
 silent command -v jq || error "jq command not found"
 
 
+narrow() (
+  cd "${1%%/}"
+  grep -EiHl "$SELECT_QUICK" $SELECT_PATTERN | sed -E "s~^~${1%%/}\/~g"
+)
+
 print_on_match() {
   if content "$1" | grep -Eiq "$SELECT_REGEX"; then
     for key in $SELECT_KEYS; do
@@ -137,9 +146,15 @@ fi
 for path; do
   if [ -d "$path" ]; then
     info "Processing directory %s" "$path"
-    find "${1:-.}" -type f -name "$SELECT_PATTERN" | while read -r file; do
-      print_on_match "$file"
-    done
+    if [ -z "$SELECT_QUICK" ]; then
+      find "$path" -type f -name "$SELECT_PATTERN" | while read -r file; do
+        print_on_match "$file"
+      done
+    else
+      narrow "$path" | while read -r file; do
+        print_on_match "$file"
+      done
+    fi
   elif [ -f "$path" ]; then
     info "Processing file %s" "$path"
     print_on_match "$path"
