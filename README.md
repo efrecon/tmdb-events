@@ -3,7 +3,8 @@
 ## Running
 
 Create an API key. Set the `TMDB_KEY` environment variable to the content of the
-API key. Using the key for reading from the DB is enough.
+API key. Using the key for reading from the DB is enough. Note: the key below is
+invalid, it is here for demonstration purposes.
 
 ```bash
 # API key to TMDB
@@ -85,6 +86,36 @@ mistakes.
 ```bash
 ./show.sh -k 'id' -- ./data/person | ./dump.sh -l fr-FR -v -r ./data -- person
 ```
+
+### Searching for matching data
+
+#### All persons born today
+
+This uses the [`select.sh`](./select.sh) tool. It will search for entities that
+match one or several keys. The content of the keys will be matched against the
+same regular expression. The default is to print the value for the keys,
+together with the path to the file (tabulated).
+
+The example below would print all known persons born on the same day as today,
+and their birthdate. This works because the default is to print the keys that
+are used for the match.
+
+```bash
+./select.sh -w 'birthday' -r "$(date +'%m-%d')\$" -- ./data/person
+```
+
+#### Most popular person born today
+
+The following command would show the most popular person born today. It works by
+requesting to show other keys, led by the popularity and sorting on that
+popularity score as a numerical value.
+
+```bash
+./select.sh -k 'popularity birthday name' -w 'birthday' -r "$(date +'%m-%d')\$" -- ./data/person |
+  sort -k 1 -g -r |
+  head -n 1
+```
+
 
 ## TODO
 
