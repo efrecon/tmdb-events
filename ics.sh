@@ -43,12 +43,14 @@ usage() {
 }
 
 # Parse named arguments using getopts
-while getopts ":d:l:vh-" opt; do
+while getopts ":d:l:r:vh-" opt; do
   case "$opt" in
     d) # Number of days around today to include in the calendar. Empty means entire year.
       ICS_DAYS=$OPTARG;;
     l) # Language for entries in the calendar
       ICS_LANGUAGE=$OPTARG;;
+    r) # Root directory for downloaded data. Must contain one sub per language, then one sub per type.
+      ICS_DATA_ROOT=$OPTARG;;
     v) # Increase verbosity each time repeated
       ICS_VERBOSE=$(( ICS_VERBOSE + 1 ));;
     h) # Show this help
@@ -113,7 +115,8 @@ date_interval() {
   # Compute the start of the interval in seconds since epoch
   _secs=$(date -u -d "$2" +%s)
   # Output the dates in YYYY-MM-DD format
-  for i in $(seq 1 $1); do
+  # shellcheck disable=SC2034 # i just used in the for loop
+  for i in $(seq 1 "$1"); do
     date -u -d "@$_secs" +"${3:-"%Y-%m-%d"}"
     _secs=$(( _secs + 86400 ))
   done
@@ -124,14 +127,15 @@ date_interval() {
 # $1: month-day in MM-DD format
 most_popular_person() {
   birthday=$1
-  info "Picking most popular person born on %s" "$1"
+  info "Picking most popular %s person born on %s" "$ICS_LANGUAGE" "$1"
+  ICS_DATA_DIR="${ICS_DATA_ROOT%%/}/${ICS_LANGUAGE}/person"
   "$ICS_SELECT" \
     -k 'popularity' \
     -w 'birthday' \
     -q "$1" \
     -r "${1}\$" \
       -- \
-        ${ICS_DATA_ROOT%%/}/person |
+        "$ICS_DATA_DIR" |
       sort -k 1 -g -r |
       head -n 1 |
       cut -f2
@@ -196,7 +200,7 @@ ics_entry() {
   month=$(date -u -d "$birthday" +%m)
   day=$(date -u -d "$birthday" +%d)
   today="$(date -u +%Y)-$month-$day 12:00:00"
-  tomorrow=$(date_span 1 "$today" "%Y-%m-%d %H:%M:%S" | tail -n1)
+  #tomorrow=$(date_span 1 "$today" "%Y-%m-%d %H:%M:%S" | tail -n1)
 
   # Generate the ICS entry
   cat <<EOF

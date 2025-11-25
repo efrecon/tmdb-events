@@ -52,7 +52,7 @@ while getopts ":f:k:l:s:r:vh-" opt; do
       TMDB_KEY=$OPTARG;;
     l) # Language for results
       TMDB_LANGUAGE=$OPTARG;;
-    r) # Root directory for dumped data. Will contain one subdirectory per type.
+    r) # Root directory for dumped data. Will contain one sub per language, then one sub per type.
       TMDB_DATA_ROOT=$OPTARG;;
     s) # How long to pause (in seconds) after $TMDB_PAUSE requests
       TMDB_SLEEP=$OPTARG;;
@@ -145,9 +145,9 @@ for type; do
   case "$type" in
     person|movie|tv_series|collections|tv_network|keyword|production_company)
       # Create dump directory named after the type under the root, if needed.
-      TMDB_DATA_DIR="${TMDB_DATA_ROOT}/${type}"
+      TMDB_DATA_DIR="${TMDB_DATA_ROOT}/${TMDB_LANGUAGE}/${type}"
       if ! [ -d "$TMDB_DATA_DIR" ]; then
-        info "Creating dump directory: %s" "$TMDB_DATA_DIR"
+        info "Creating dump directory for language %s: %s" "$TMDB_LANGUAGE" "$TMDB_DATA_DIR"
         mkdir -p "${TMDB_DATA_DIR}"
       fi
 
