@@ -107,6 +107,8 @@ api_curl() {
 
 
 silent command -v curl || error "curl command not found"
+printf "%s" "$GIST_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+  error "Invalid language code format: %s" "$GIST_LANGUAGE"
 
 if [ "$GIST_PUBLIC" = "1" ]; then
   GIST_PUBLIC_JSON="true"
@@ -124,7 +126,7 @@ for path; do
   [ -z "$_desc" ] && _desc="TMDB dump from ${path##*/} in ${GIST_LANGUAGE}"
   fname=$(basename "$path")-${GIST_LANGUAGE}.tgz.b64
   info "Compressing content of %s to upload to gist" "$path"
-  b64=$((cd "$path" && tar -czf - $GIST_PATTERN ) | base64 -w 0)
+  b64=$( ( cd "$path" && tar -czf - $GIST_PATTERN ) | base64 -w 0)
   info "Uploading gist for %s as %s" "$path" "$fname"
   api_curl /gists -X POST -d @- <<EOF
 {
