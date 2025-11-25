@@ -239,6 +239,10 @@ silent() { "$@" >/dev/null 2>&1 </dev/null; }
 
 # Verify required commands are available
 silent command -v fold || error "fold command not found"
+if [ -n "$ICS_LANGUAGE" ]; then
+  printf "%s" "$ICS_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+    error "Invalid language code format: %s" "$ICS_LANGUAGE"
+fi
 
 
 if [ -n "$ICS_DAYS" ] && [ "$ICS_DAYS" -gt 0 ]; then

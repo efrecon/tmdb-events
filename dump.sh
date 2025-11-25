@@ -64,7 +64,7 @@ while getopts ":f:k:l:s:r:vh-" opt; do
       TMDB_VERBOSE=$(( TMDB_VERBOSE + 1 ));;
     h) # Show this help
       usage 0;;
-    -) # Any argument after -- is a known type of data to dump, e.g. person, movie, tv_series, etc.
+    -) # Any argument after -- is a known type of data to dump. Recognized: person, movie, tv, collection, network, company
       break;;
     *)
       usage 1;;
@@ -117,7 +117,9 @@ list_all() {
     _dump_date=$(date -d 'yesterday' +%m_%d_%Y)
     info "Listing all IDs for type %s at %s" "$1" "$_dump_date"
 
-    download "${TMDB_EXPORTS%%/}/${1}_ids_${_dump_date}.json.gz" - |
+    # Convert from (API) type to export type
+    types=$( printf '%s\n' "$1" | sed 's/person/person/g; s/movie/movie/g; s/tv/tv_series/g; s/collection/collection/g; s/network/tv_network/g; s/keyword/keyword/g; s/company/production_company/g' )
+    download "${TMDB_EXPORTS%%/}/${types}_ids_${_dump_date}.json.gz" - |
       gunzip |
       grep -Eo '"id":[[:space:]]*([0-9]+),' |
       grep -Eo '[0-9]+'
@@ -140,10 +142,12 @@ dump() {
 
 silent command -v curl || error "curl command not found"
 silent command -v gunzip || error "gunzip command not found"
+printf "%s" "$TMDB_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+  error "Invalid language code format: %s" "$TMDB_LANGUAGE"
 
 for type; do
   case "$type" in
-    person|movie|tv_series|collections|tv_network|keyword|production_company)
+    person|movie|tv|collection|network|keyword|company)
       # Create dump directory named after the type under the root, if needed.
       TMDB_DATA_DIR="${TMDB_DATA_ROOT}/${TMDB_LANGUAGE}/${type}"
       if ! [ -d "$TMDB_DATA_DIR" ]; then
@@ -166,7 +170,7 @@ for type; do
       done
       ;;
     *)
-      warn "Unknown dump type: %s" "$type"
+      warn "Unknown dump type: %s. Recognized: person, movie, tv, collection, network, keyword, company" "$type"
       ;;
   esac
 done

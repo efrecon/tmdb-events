@@ -107,6 +107,8 @@ api_curl() {
 
 
 silent command -v curl || error "curl command not found"
+printf "%s" "$GIST_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+  error "Invalid language code format: %s" "$GIST_LANGUAGE"
 
 if [ "$GIST_PUBLIC" = "1" ]; then
   GIST_PUBLIC_JSON="true"
