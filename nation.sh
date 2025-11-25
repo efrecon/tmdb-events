@@ -24,7 +24,7 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 usage() {
   # This uses the comments behind the options to show the help. Not extremely
   # correct, but effective and simple.
-  echo "$0 dumps TMDB content to disk." && \
+  echo "$0 dumps TMDB content originating from one or several languages." && \
     grep "[[:space:]].)[[:space:]][[:space:]]*#" "$0" |
     sed 's/#//' |
     sed -E 's/([a-zA-Z-])\)/-\1/'
@@ -44,7 +44,7 @@ while getopts ":f:k:l:s:r:vh-" opt; do
       NATION_VERBOSE=$(( NATION_VERBOSE + 1 ));;
     h) # Show this help
       usage 0;;
-    -) # Any argument after -- is a known type of data to dump, e.g. person, movie, tv_series, etc.
+    -) # Any argument after -- is a known type of data to dump. Recognized: person, movie, tv, collection, network, company
       break;;
     *)
       usage 1;;
@@ -100,7 +100,7 @@ s/ja-JP/日本/g
 s/zh-CN/中国/g
 s/ru-RU/Россия/g
 s/nl-NL/Nederland/g
-s/se-SE/Sverige/g
+s/sv-SE/Sverige/g
 s/fi-FI/Suomi/g
 s/pl-PL/Polska/g
 s/dk-DK/Danmark/g
@@ -128,7 +128,7 @@ s/ja/日本/g
 s/zh/中国/g
 s/ru/Россия/g
 s/nl/Nederland/g
-s/se/Sverige/g
+s/sv/Sverige/g
 s/fi/Suomi/g
 s/pl/Polska/g
 s/dk/Danmark/g
@@ -148,8 +148,7 @@ s/id/Indonesia/g
 EOF
       country=$(printf '%s\n' "$1" | sed -f "$_sed")
       rm -f "$_sed"
-      if printf "%s" "$country" | grep -qE '^[a-z]{2}$' ||
-          printf "%s" "$country" | grep -qE '^[a-z]{2}-[A-Z]{2}$' ; then
+      if printf "%s" "$country" | grep -qE '^[a-z]{2}(-\w{2})?$'; then
         warn "Could not map language code %s to a country name, skipping" "$1"
         country=""
       else
@@ -164,54 +163,58 @@ get_language() {
   _sed=$(mktemp)
 cat <<EOF >"$_sed"
 # Mappings for common 2-letter language codes to their native names
-s/\ben\(-\w\{2\}\)\?/\English/g
-s/\bfr\(-\w\{2\}\)\?/\Français/g
-s/\bde\(-\w\{2\}\)\?/\Deutsch/g
-s/\bes\(-\w\{2\}\)\?/\Español/g
-s/\bit\(-\w\{2\}\)\?/\Italiano/g
-s/\bpt\(-\w\{2\}\)\?/\Português/g
-s/\bja\(-\w\{2\}\)\?/\日本語/g
-s/\bzh\(-\w\{2\}\)\?/\中文/g
-s/\bru\(-\w\{2\}\)\?/\Русский язык/g
-s/\bnl\(-\w\{2\}\)\?/\Nederlands/g
-s/\bsv\(-\w\{2\}\)\?/\Svenska/g
-s/\bfi\(-\w\{2\}\)\?/\Suomi/g
-s/\bpl\(-\w\{2\}\)\?/\Polski/g
-s/\bda\(-\w\{2\}\)\?/\Dansk/g
-s/\bno\(-\w\{2\}\)\?/\Norsk/g
-s/\bis\(-\w\{2\}\)\?/\Íslenska/g
-s/\btr\(-\w\{2\}\)\?/\Türkçe/g
-s/\bel\(-\w\{2\}\)\?/\Ελληνικά/g
-s/\bhu\(-\w\{2\}\)\?/\Magyar/g
-s/\bcs\(-\w\{2\}\)\?/\Čeština/g
-s/\bsk\(-\w\{2\}\)\?/\Slovenčina/g
-s/\bhr\(-\w\{2\}\)\?/\Hrvatski/g
-s/\buk\(-\w\{2\}\)\?/\Українська/g
-s/\bhi\(-\w\{2\}\)\?/\हिन्दी/g
-s/\bth\(-\w\{2\}\)\?/\ไทย/g
-s/\bvi\(-\w\{2\}\)\?/\Việt Nam/g
-s/\bhe\(-\w\{2\}\)\?/\עברית/g
-s/\bar\(-\w\{2\}\)\?/\العربية/g
+s/\ben(-\w{2})?/English/g
+s/\bfr(-\w{2})?/Français/g
+s/\bde(-\w{2})?/Deutsch/g
+s/\bes(-\w{2})?/Español/g
+s/\bit(-\w{2})?/Italiano/g
+s/\bpt(-\w{2})?/Português/g
+s/\bja(-\w{2})?/日本語/g
+s/\bzh(-\w{2})?/中文/g
+s/\bru(-\w{2})?/Русский язык/g
+s/\bnl(-\w{2})?/Nederlands/g
+s/\bsv(-\w{2})?/Svenska/g
+s/\bfi(-\w{2})?/Suomi/g
+s/\bpl(-\w{2})?/Polski/g
+s/\bda(-\w{2})?/Dansk/g
+s/\bno(-\w{2})?/Norsk/g
+s/\bis(-\w{2})?/Íslenska/g
+s/\btr(-\w{2})?/Türkçe/g
+s/\bel(-\w{2})?/Ελληνικά/g
+s/\bhu(-\w{2})?/Magyar/g
+s/\bcs(-\w{2})?/Čeština/g
+s/\bsk(-\w{2})?/Slovenčina/g
+s/\bhr(-\w{2})?/Hrvatski/g
+s/\buk(-\w{2})?/Українська/g
+s/\bhi(-\w{2})?/हिन्दी/g
+s/\bth(-\w{2})?/ไทย/g
+s/\bvi(-\w{2})?/Việt Nam/g
+s/\bhe(-\w{2})?/עברית/g
+s/\bar(-\w{2})?/العربية/g
 EOF
-  language=$(printf '%s\n' "$1" | sed -f "$_sed")
+  language=$(printf '%s\n' "$1" | sed -E -f "$_sed")
   rm -f "$_sed"
-  if printf "%s" "$language" | grep -qE '^[a-z]{2}$' ||
-      printf "%s" "$language" | grep -qE '^[a-z]{2}-[A-Z]{2}$' ; then
+  if printf "%s" "$language" | grep -qE '^[a-z]{2}(-\w{2})?$'; then
     warn "Could not map language code %s to a country name, skipping" "$1"
     language=""
   else
-    info "Mapped language code %s to country name %s" "$1" "$country"
+    info "Mapped language code %s to language %s" "$1" "$language"
   fi
   printf '%s' "$language"
 }
 
 
-# TODO: Fix for other types than person
 for type; do
   for code in $NATION_LANGUAGE; do
+    printf "%s" "$code" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+      error "Invalid language code format: %s" "$code"
     case "$type" in
-      person)
-        FILTER_KEYS=".place_of_birth"
+      person|network|company)
+        # Set the JSON key to filter on dependeing on the type
+        FILTER_KEYS=".origin_country"
+        [ "$type" = "person" ] && FILTER_KEYS=".place_of_birth"
+
+        # Match the content on the country extracted from the language code
         country=$(get_country "$code")
         if [ -n "$country" ]; then
           FILTER_REGEX="($country)"
@@ -220,8 +223,13 @@ for type; do
           continue
         fi
         ;;
-      movies)
+      movie|tv|collection)
+        # Set the JSON key to filter on dependeing on the type
         FILTER_KEYS=".original_language"
+
+        # Match the content on the language extracted from the language code.
+        # Language is the original language here, not the name of the language
+        # in English.
         lang=$(get_language "$code" | tr '|' ', ')
         if [ -n "$lang" ]; then
           FILTER_REGEX="($lang)"
@@ -235,6 +243,7 @@ for type; do
     esac
     export FILTER_KEYS FILTER_REGEX
     info "Dumping data for language %s with filter regex %s on keys" "$code" "$FILTER_REGEX" "$FILTER_KEYS"
+    FILTER_VERBOSE=$NATION_VERBOSE \
     TMDB_VERBOSE=$NATION_VERBOSE \
       "$NATION_DUMP" \
         -l "$code" \
