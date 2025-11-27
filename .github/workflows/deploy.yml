@@ -22,7 +22,7 @@ jobs:
       - name: Seed
         run: |
           SEED=https://gist.github.com/efrecon/61e650e455723408bccde0dcb1d58825/raw/b60ae7be1fe37c1b1f7a88acdecef33e29646a89/person-fr-FR.tgz.b64
-          mkdir -p ./data/person
+          mkdir -p ./data/fr-FR/person
           curl -fsSL --retry 5 --retry-delay 3 "$SEED" |
             base64 -d |
             tar -xzvf - -C ./data/fr-FR/person
