@@ -4,7 +4,7 @@
 
 Calenders are automatically generated for French-born person at the following locations.
 
-- [fr-FR](https://efrecon.github.io/tmdb-events/fr-FR/2025.ics)
+- [fr-FR](https://efrecon.github.io/tmdb-events/fr-FR/person.ics)
 
 ## Running
 
