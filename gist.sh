@@ -45,7 +45,7 @@ usage() {
 while getopts ":d:l:pt:vh-" opt; do
   case "$opt" in
     t) # GitHub PAT token with gist write access
-      GIST_KEY=$OPTARG;;
+      GIST_TOKEN=$OPTARG;;
     l) # Language of results
       GIST_LANGUAGE=$OPTARG;;
     d) # Description for the gist
@@ -56,7 +56,7 @@ while getopts ":d:l:pt:vh-" opt; do
       GIST_VERBOSE=$(( GIST_VERBOSE + 1 ));;
     h) # Show this help
       usage 0;;
-    -) # Any argument after -- is a known type of data to dump, e.g. person, movie, tv_series, etc.
+    -) # Any argument after -- is a known type of data to push as a base64 encoded compressed archive.
       break;;
     *)
       usage 1;;
@@ -116,19 +116,25 @@ else
   GIST_PUBLIC_JSON="false"
 fi
 
-for path; do
-  if [ ! -d "$path" ]; then
-    warn "Path %s is not a directory, skipping" "$path"
-    continue
-  fi
+for type; do
+  case "$type" in
+    person|movie|tv|collection|network|keyword|company)
+      path="${GIST_DATA_ROOT%//}/${GIST_LANGUAGE}/${type}"
+      if [ ! -d "$path" ]; then
+        warn "Data path %s for type %s does not exist, skipping" "$path" "$type"
+        continue
+      fi
 
-  _desc=$GIST_DESCRIPTION
-  [ -z "$_desc" ] && _desc="TMDB dump from ${path##*/} in ${GIST_LANGUAGE}"
-  fname=$(basename "$path")-${GIST_LANGUAGE}.tgz.b64
-  info "Compressing content of %s to upload to gist" "$path"
-  b64=$( ( cd "$path" && tar -czf - $GIST_PATTERN ) | base64 -w 0)
-  info "Uploading gist for %s as %s" "$path" "$fname"
-  api_curl /gists -X POST -d @- <<EOF
+      _desc=$GIST_DESCRIPTION
+      [ -z "$_desc" ] && _desc="TMDB dump for $type in ${GIST_LANGUAGE}"
+      fname=${type}-${GIST_LANGUAGE}.tgz.b64
+      info "Compressing content of %s to upload to gist" "$path"
+      b64=$(  ( cd "$path" && find . -maxdepth 1 -type f -name "$GIST_PATTERN" ) |
+              sort -g |
+              xargs tar -C "$path" -czf - |
+              base64 -w 0 )
+      info "Uploading gist for %s as %s" "$path" "$fname"
+      api_curl /gists -X POST -d @- <<EOF
 {
   "description": "$_desc",
   "public": $GIST_PUBLIC_JSON,
@@ -139,4 +145,10 @@ for path; do
   }
 }
 EOF
+
+      ;;  
+    *)
+      warn "Unknown dump type: %s. Recognized: person, movie, tv, collection, network, keyword, company" "$type"
+      ;;
+  esac
 done

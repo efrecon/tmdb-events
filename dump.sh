@@ -46,7 +46,7 @@ usage() {
 }
 
 # Parse named arguments using getopts
-while getopts ":f:k:l:s:r:vh-" opt; do
+while getopts ":f:k:l:s:r:x:vh-" opt; do
   case "$opt" in
     k) # API key, at least read permissions
       TMDB_KEY=$OPTARG;;
