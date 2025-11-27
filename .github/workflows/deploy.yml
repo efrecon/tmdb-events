@@ -17,7 +17,7 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     env:
-      LOCALE: fr_FR
+      LOCALE: fr-FR
       TYPE: person
 
     steps:
@@ -27,7 +27,7 @@ jobs:
       - name: Seed
         run: |
           SEED=https://gist.github.com/efrecon/61e650e455723408bccde0dcb1d58825/raw/b60ae7be1fe37c1b1f7a88acdecef33e29646a89/${TYPE}-${LOCALE}.tgz.b64
-          mkdir -p ./data/${LOCALE}/${TYPE}
+          mkdir -p "./data/${LOCALE}/${TYPE}"
           curl -fsSL --retry 5 --retry-delay 3 "$SEED" |
             base64 -d |
             tar -xzvf - -C ./data/${LOCALE}/${TYPE}
@@ -35,7 +35,7 @@ jobs:
       - name: Generate Calendar
         run: |
           mkdir -p ./ics/${LOCALE}
-          ./ics.sh -v -d 10 -l "${LOCALE}" > ./ics/${LOCALE}/${TYPE}.ics
+          ./ics.sh -v -d 10 -l "${LOCALE}" > "./ics/${LOCALE}/${TYPE}.ics"
 
       - name: Upload Pages
         uses: actions/upload-pages-artifact@v4
