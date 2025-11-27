@@ -15,7 +15,7 @@ Language for the output can be changed from the command-line.
 Scripts such as [byorigin](#automated) or [dump](#dump-persons-names-and-bio) will restrict the subset saved to disk.
 
 I made this to break the uniformity of life for my mum.
-She lives in an elderly care house and this information will be picked and shown on eInk display.
+She lives in an elderly care house and this information will be picked and shown on an eInk display.
 
   [iCalendar]: https://icalendar.org/
   [tmdb]: https://themovie.db/
@@ -27,7 +27,7 @@ She lives in an elderly care house and this information will be picked and shown
 
 Calenders are automatically generated for French-born person at the following locations.
 
-- [fr-FR](https://efrecon.github.io/tmdb-events/fr-FR/person.ics)
+- [fr-FR][person-fr]
 
 ## Running
 
