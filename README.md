@@ -50,7 +50,7 @@ Each script implements a specific task, and they can be combined in different wa
 4. [`ics.sh`](./ics.sh) generates a calendar for a given type and locale found on disk.
    For the time being, `ics.sh` is only able to handle the `person` type.
 5. `ics.sh` uses [`select.sh`](./select.sh) to find persons that are born on a given date.
-   `select.sh` output their popularity and `ics.sh` will pick the person who is the most popular.
+   `select.sh` output their popularity and `ics.sh` will pick at random among the most popular ones.
 6. Remaining data is picked from the data dumps using [`show.sh`](./show.sh).
 
 Data dump from step 3 can be pushed to a gist using [`gist.sh`](./gist.sh).
