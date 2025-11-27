@@ -141,7 +141,7 @@ random_number() {
 # $1: month-day in MM-DD format
 popular_persons() {
   birthday=$1
-  info "Picking most popular %s person born on %s" "$ICS_LOCALE" "$1"
+  info "Collecting %s persons born on %s, sorted by popularity." "$ICS_LOCALE" "$1"
   ICS_DATA_DIR="${ICS_DATA_ROOT%%/}/${ICS_LOCALE}/person"
   "$ICS_SELECT" \
     -k 'popularity' \
