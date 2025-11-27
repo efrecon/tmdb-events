@@ -1,4 +1,27 @@
-# TMDB Filtering
+# TMDB Filtering and Analysis
+
+The ultimate goal of this project is to generate [iCalendar] files with one-day events for selected celebrities.
+The project contains a series of POSIX shell scripts to collect and select data, and then generate calendars.
+Information is collected from data at [the Movie DB][tmdb].
+You will need to [request] for API key if you want to run those scripts by yourself.
+Available online is only a [calendar][person-fr] in French, with celebrities related to France.
+This calendar is re-generated twice a week and contains one-day events for 10 days before and 10 days after the generation date.
+Regeneration uses a one-time [dump](#automated) of a selected subset from [TMDB][tmdb].
+
+While the purpose is generating calendars, scripts from this project are able to collect information about:
+persons, movies, TV series, collections, TV networks, Companies.
+Language for the output can be changed from the command-line.
+[TMDB][tmdb] contains [millions] of entries.
+Scripts such as [byorigin](#automated) or [dump](#dump-persons-names-and-bio) will restrict the subset saved to disk.
+
+I made this to break the uniformity of life for my mum.
+She lives in a elderly care house and this information will be picked and shown on eInk display.
+
+  [iCalendar]: https://icalendar.org/
+  [tmdb]: https://themovie.db/
+  [request]: https://developer.themoviedb.org/docs/faq#how-do-i-apply-for-an-api-key
+  [person-fr]: https://efrecon.github.io/tmdb-events/fr-FR/person.ics
+  [millions]: https://developer.themoviedb.org/docs/daily-id-exports
 
 ## Calendars
 
