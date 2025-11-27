@@ -15,8 +15,8 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # Root directory for downloaded data
 : "${ORIGIN_DATA_ROOT:="${ORIGIN_ROOTDIR}/data"}"
 
-# Languages to dump.
-: "${ORIGIN_LANGUAGE:="fr-FR sv-SV"}"
+# Locales to dump.
+: "${ORIGIN_LOCALE:="fr-FR sv-SV"}"
 
 # Verbosity level, can be increased with -v option
 : "${ORIGIN_VERBOSE:=0}"
@@ -24,7 +24,7 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 usage() {
   # This uses the comments behind the options to show the help. Not extremely
   # correct, but effective and simple.
-  echo "$0 dumps TMDB content originating from one or several languages." && \
+  echo "$0 dumps TMDB content originating from one or several locales." && \
     grep "[[:space:]].)[[:space:]][[:space:]]*#" "$0" |
     sed 's/#//' |
     sed -E 's/([a-zA-Z-])\)/-\1/'
@@ -36,9 +36,9 @@ usage() {
 # Parse named arguments using getopts
 while getopts ":f:k:l:s:r:vh-" opt; do
   case "$opt" in
-    l) # Languages for results
-      ORIGIN_LANGUAGE=$OPTARG;;
-    r) # Root directory for dumped data. Will contain one sub per language, then one sub per type.
+    l) # Locales for results on disk.
+      ORIGIN_LOCALE=$OPTARG;;
+    r) # Root directory for dumped data. Will contain one sub per locale, then one sub per type.
       ORIGIN_DATA_ROOT=$OPTARG;;
     v) # Increase verbosity each time repeated
       ORIGIN_VERBOSE=$(( ORIGIN_VERBOSE + 1 ));;
@@ -149,10 +149,10 @@ EOF
       country=$(printf '%s\n' "$1" | sed -f "$_sed")
       rm -f "$_sed"
       if printf "%s" "$country" | grep -qE '^[a-z]{2}(-\w{2})?$'; then
-        warn "Could not map language code %s to a country name, skipping" "$1"
+        warn "Could not map locale code %s to a country name, skipping" "$1"
         country=""
       else
-        info "Mapped language code %s to country name %s" "$1" "$country"
+        info "Mapped locale code %s to country name %s" "$1" "$country"
       fi
       ;;
   esac
@@ -195,26 +195,26 @@ EOF
   language=$(printf '%s\n' "$1" | sed -E -f "$_sed")
   rm -f "$_sed"
   if printf "%s" "$language" | grep -qE '^[a-z]{2}(-\w{2})?$'; then
-    warn "Could not map language code %s to a country name, skipping" "$1"
+    warn "Could not map locale code %s to a country name, skipping" "$1"
     language=""
   else
-    info "Mapped language code %s to language %s" "$1" "$language"
+    info "Mapped locale code %s to language %s" "$1" "$language"
   fi
   printf '%s' "$language"
 }
 
 
 for type; do
-  for code in $ORIGIN_LANGUAGE; do
+  for code in $ORIGIN_LOCALE; do
     printf "%s" "$code" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
-      error "Invalid language code format: %s" "$code"
+      error "Invalid locale code format: %s" "$code"
     case "$type" in
       person|network|company)
         # Set the JSON key to filter on dependeing on the type
         FILTER_KEYS=".origin_country"
         [ "$type" = "person" ] && FILTER_KEYS=".place_of_birth"
 
-        # Match the content on the country extracted from the language code
+        # Match the content on the country extracted from the locale code
         country=$(get_country "$code")
         if [ -n "$country" ]; then
           FILTER_REGEX="($country)"
@@ -227,7 +227,7 @@ for type; do
         # Set the JSON key to filter on dependeing on the type
         FILTER_KEYS=".original_language"
 
-        # Match the content on the language extracted from the language code.
+        # Match the content on the language extracted from the locale code.
         # Language is the original language here, not the name of the language
         # in English.
         lang=$(get_language "$code" | tr '|' ', ')
@@ -242,7 +242,7 @@ for type; do
         error "Dumping type %s not yet supported" "$type";;
     esac
     export FILTER_KEYS FILTER_REGEX
-    info "Dumping data for language %s with filter regex %s on keys" "$code" "$FILTER_REGEX" "$FILTER_KEYS"
+    info "Dumping data for locale %s with filter regex %s on keys" "$code" "$FILTER_REGEX" "$FILTER_KEYS"
     FILTER_VERBOSE=$ORIGIN_VERBOSE \
     TMDB_VERBOSE=$ORIGIN_VERBOSE \
       "$ORIGIN_DUMP" \

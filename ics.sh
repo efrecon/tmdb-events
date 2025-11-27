@@ -22,10 +22,10 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # before and one week after today). When empty, the entire year is included.
 : "${ICS_DAYS:="7"}"
 
-# Language for entries in the calendar. This should match the language used in
-# the data files, so used when running dump.sh. When empty, no language will be
-# set, this is the default.
-: "${ICS_LANGUAGE:=""}"
+# Locale for entries in the calendar. This should match the locale used in the
+# data files, so used when running dump.sh. When empty, no locale will be set,
+# this is the default.
+: "${ICS_LOCALE:=""}"
 
 # Verbosity level, can be increased with -v option
 : "${ICS_VERBOSE:=0}"
@@ -47,9 +47,9 @@ while getopts ":d:l:r:vh-" opt; do
   case "$opt" in
     d) # Number of days around today to include in the calendar. Empty means entire year.
       ICS_DAYS=$OPTARG;;
-    l) # Language for entries in the calendar
-      ICS_LANGUAGE=$OPTARG;;
-    r) # Root directory for downloaded data. Must contain one sub per language, then one sub per type.
+    l) # Locale for entries in the calendar
+      ICS_LOCALE=$OPTARG;;
+    r) # Root directory for downloaded data. Must contain one sub per locale, then one sub per type.
       ICS_DATA_ROOT=$OPTARG;;
     v) # Increase verbosity each time repeated
       ICS_VERBOSE=$(( ICS_VERBOSE + 1 ));;
@@ -127,8 +127,8 @@ date_interval() {
 # $1: month-day in MM-DD format
 most_popular_person() {
   birthday=$1
-  info "Picking most popular %s person born on %s" "$ICS_LANGUAGE" "$1"
-  ICS_DATA_DIR="${ICS_DATA_ROOT%%/}/${ICS_LANGUAGE}/person"
+  info "Picking most popular %s person born on %s" "$ICS_LOCALE" "$1"
+  ICS_DATA_DIR="${ICS_DATA_ROOT%%/}/${ICS_LOCALE}/person"
   "$ICS_SELECT" \
     -k 'popularity' \
     -w 'birthday' \
@@ -145,17 +145,17 @@ most_popular_person() {
 ics_line_endings() { tr -d '\r' | sed 's/$/\r/'; }
 
 ics_localized() {
-  if [ -n "$ICS_LANGUAGE" ]; then
-    printf '%s;LANGUAGE=%s' "$1" "$ICS_LANGUAGE"
+  if [ -n "$ICS_LOCALE" ]; then
+    printf '%s;locale=%s' "$1" "$ICS_LOCALE"
   else
-    printf '%s' "$1" "$ICS_LANGUAGE"
+    printf '%s' "$1" "$ICS_LOCALE"
   fi
 }
 
 
-# Generate an ICS entry language parameter if a language is provided.
-# $1: language code
-ics_language() { [ -n "$1" ] && printf ';LANGUAGE:%s' "$1"; }
+# Generate an ICS entry locale parameter if a locale is provided.
+# $1: locale code
+ICS_LOCALE() { [ -n "$1" ] && printf ';LANGUAGE:%s' "$1"; }
 
 
 # Output ICS header
@@ -182,7 +182,7 @@ EOF
 ics_fold() { fold -s -w 74 | sed 's/^/ /; 1s/^ //'; }
 
 # Output an ICS entry for a given person file. Content will be pinpointed to the
-# language if provided.
+# locale if provided.
 # $1: path to person file
 ics_entry() {
   # Collect person data using the show.sh script. For the description, we keep
@@ -239,9 +239,9 @@ silent() { "$@" >/dev/null 2>&1 </dev/null; }
 
 # Verify required commands are available
 silent command -v fold || error "fold command not found"
-if [ -n "$ICS_LANGUAGE" ]; then
-  printf "%s" "$ICS_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
-    error "Invalid language code format: %s" "$ICS_LANGUAGE"
+if [ -n "$ICS_LOCALE" ]; then
+  printf "%s" "$ICS_LOCALE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+    error "Invalid locale code format: %s" "$ICS_LOCALE"
 fi
 
 

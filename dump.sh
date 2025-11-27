@@ -11,8 +11,8 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # API key (read).
 : "${TMDB_KEY:=""}"
 
-# Language for results.
-: "${TMDB_LANGUAGE:="en-US"}"
+# Locale for results.
+: "${TMDB_LOCALE:="en-US"}"
 
 # Root directory for downloaded data
 : "${TMDB_DATA_ROOT:="${TMDB_ROOTDIR}/data"}"
@@ -51,8 +51,8 @@ while getopts ":f:k:l:s:r:x:vh-" opt; do
     k) # API key, at least read permissions
       TMDB_KEY=$OPTARG;;
     l) # Language for results
-      TMDB_LANGUAGE=$OPTARG;;
-    r) # Root directory for dumped data. Will contain one sub per language, then one sub per type.
+      TMDB_LOCALE=$OPTARG;;
+    r) # Root directory for dumped data. Will contain one sub per locale, then one sub per type.
       TMDB_DATA_ROOT=$OPTARG;;
     s) # How long to pause (in seconds) after $TMDB_PAUSE requests
       TMDB_SLEEP=$OPTARG;;
@@ -109,7 +109,7 @@ run_curl() {
 }
 
 api_curl() {
-  run_curl --header "Authorization: Bearer $TMDB_KEY" --url "https://api.themoviedb.org/3/${1}?language=${TMDB_LANGUAGE}"
+  run_curl --header "Authorization: Bearer $TMDB_KEY" --url "https://api.themoviedb.org/3/${1}?language=${TMDB_LOCALE}"
 }
 
 list_all() {
@@ -142,16 +142,16 @@ dump() {
 
 silent command -v curl || error "curl command not found"
 silent command -v gunzip || error "gunzip command not found"
-printf "%s" "$TMDB_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
-  error "Invalid language code format: %s" "$TMDB_LANGUAGE"
+printf "%s" "$TMDB_LOCALE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+  error "Invalid locale code format: %s" "$TMDB_LOCALE"
 
 for type; do
   case "$type" in
     person|movie|tv|collection|network|keyword|company)
       # Create dump directory named after the type under the root, if needed.
-      TMDB_DATA_DIR="${TMDB_DATA_ROOT}/${TMDB_LANGUAGE}/${type}"
+      TMDB_DATA_DIR="${TMDB_DATA_ROOT}/${TMDB_LOCALE}/${type}"
       if ! [ -d "$TMDB_DATA_DIR" ]; then
-        info "Creating dump directory for language %s: %s" "$TMDB_LANGUAGE" "$TMDB_DATA_DIR"
+        info "Creating dump directory for locale %s: %s" "$TMDB_LOCALE" "$TMDB_DATA_DIR"
         mkdir -p "${TMDB_DATA_DIR}"
       fi
 
