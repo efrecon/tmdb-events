@@ -3,7 +3,7 @@
 The ultimate goal of this project is to generate [iCalendar] files with one-day events for selected celebrities.
 The project contains a series of POSIX shell scripts to collect and select data, and then generate calendars.
 Information is collected from data at [the Movie DB][tmdb].
-You will need to [request] for API key if you want to run those scripts by yourself.
+You will need to [request] for an API key if you want to run those scripts by yourself.
 Available online is only a [calendar][person-fr] in French, with celebrities related to France.
 This calendar is re-generated twice a week and contains one-day events for 10 days before and 10 days after the generation date.
 Regeneration uses a one-time [dump](#automated) of a selected subset from [TMDB][tmdb].
@@ -15,7 +15,7 @@ Language for the output can be changed from the command-line.
 Scripts such as [byorigin](#automated) or [dump](#dump-persons-names-and-bio) will restrict the subset saved to disk.
 
 I made this to break the uniformity of life for my mum.
-She lives in a elderly care house and this information will be picked and shown on eInk display.
+She lives in an elderly care house and this information will be picked and shown on eInk display.
 
   [iCalendar]: https://icalendar.org/
   [tmdb]: https://themovie.db/
