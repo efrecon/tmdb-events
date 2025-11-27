@@ -34,7 +34,9 @@ Note that this changes the output language to french as an example, the default 
 
 ### Filtering a Dump
 
-#### Select French-related persons
+#### Manual
+
+##### Select French-related persons
 
 To only dump persons that mention a french relation in their biography and place of birth, use a command as below.
 This uses the [`filter.sh`](./filter.sh) to keep only persons that match the regular expression in their biography or place of birth.
@@ -47,7 +49,7 @@ export FILTER_KEYS FILTER_REGEX
 ./dump.sh -l fr-FR -f "./filter.sh -v" -- person
 ```
 
-#### Select people born in France and around
+##### Select people born in France and around
 
 To only dump persons born in France and French-speaking countries nearby, do as follows instead.
 
@@ -57,6 +59,20 @@ FILTER_REGEX="(france|belgique|suisse|luxembourg)"
 export FILTER_KEYS FILTER_REGEX
 
 ./dump.sh -l fr-FR -f "./filter.sh -v" -- person
+```
+
+#### Automated
+
+Automatically originating TMDB entities to their origing can be automated through `byorigin.sh` instead.
+To only dump persons born in France and French-speaking countries nearby, do as follows instead.
+This will resolve the locale to a relevant filter -- same as above for France,
+and then run `dump.sh` using that filter.
+`byorigin.sh` is able to take several locales and several types.
+Note that this is a **lengthy** -- several hours -- operation,
+as it needs to download the entire database for each pass.
+
+```bash
+./byorigin.sh -l fr-FR -v -- person
 ```
 
 ### Extract Results

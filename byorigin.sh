@@ -6,20 +6,20 @@ set -eu
 if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 
 # Root directory where this script is located
-: "${NATION_ROOTDIR:="$( cd -P -- "$(dirname -- "$(command -v -- "$0")")" && pwd -P )"}"
+: "${ORIGIN_ROOTDIR:="$( cd -P -- "$(dirname -- "$(command -v -- "$0")")" && pwd -P )"}"
 
 # Location of the dump and filter scripts
-: "${NATION_DUMP:="${NATION_ROOTDIR%//}/dump.sh"}"
-: "${NATION_FILTER:="${NATION_ROOTDIR%//}/filter.sh"}"
+: "${ORIGIN_DUMP:="${ORIGIN_ROOTDIR%//}/dump.sh"}"
+: "${ORIGIN_FILTER:="${ORIGIN_ROOTDIR%//}/filter.sh"}"
 
 # Root directory for downloaded data
-: "${NATION_DATA_ROOT:="${NATION_ROOTDIR}/data"}"
+: "${ORIGIN_DATA_ROOT:="${ORIGIN_ROOTDIR}/data"}"
 
 # Languages to dump.
-: "${NATION_LANGUAGE:="fr-FR sv-SV"}"
+: "${ORIGIN_LANGUAGE:="fr-FR sv-SV"}"
 
 # Verbosity level, can be increased with -v option
-: "${NATION_VERBOSE:=0}"
+: "${ORIGIN_VERBOSE:=0}"
 
 usage() {
   # This uses the comments behind the options to show the help. Not extremely
@@ -29,7 +29,7 @@ usage() {
     sed 's/#//' |
     sed -E 's/([a-zA-Z-])\)/-\1/'
   printf \\nEnvironment:\\n
-  set | grep '^NATION_' | sed 's/^NATION_/    NATION_/g'
+  set | grep '^ORIGIN_' | sed 's/^ORIGIN_/    ORIGIN_/g'
   exit "${1:-0}"
 }
 
@@ -37,11 +37,11 @@ usage() {
 while getopts ":f:k:l:s:r:vh-" opt; do
   case "$opt" in
     l) # Languages for results
-      NATION_LANGUAGE=$OPTARG;;
+      ORIGIN_LANGUAGE=$OPTARG;;
     r) # Root directory for dumped data. Will contain one sub per language, then one sub per type.
-      NATION_DATA_ROOT=$OPTARG;;
+      ORIGIN_DATA_ROOT=$OPTARG;;
     v) # Increase verbosity each time repeated
-      NATION_VERBOSE=$(( NATION_VERBOSE + 1 ));;
+      ORIGIN_VERBOSE=$(( ORIGIN_VERBOSE + 1 ));;
     h) # Show this help
       usage 0;;
     -) # Any argument after -- is a known type of data to dump. Recognized: person, movie, tv, collection, network, company
@@ -66,8 +66,8 @@ _log() {
   # shellcheck disable=SC2059 # ok, we want to use printf format
   printf "${_fmt}\n" "$@" >&2
 }
-trace() { [ "$NATION_VERBOSE" -ge "2" ] && _log DBG "$@" || true ; }
-info() { [ "$NATION_VERBOSE" -ge "1" ] && _log NFO "$@" || true ; }
+trace() { [ "$ORIGIN_VERBOSE" -ge "2" ] && _log DBG "$@" || true ; }
+info() { [ "$ORIGIN_VERBOSE" -ge "1" ] && _log NFO "$@" || true ; }
 warn() { _log WRN "$@"; }
 error() { _log ERR "$@" && exit 1; }
 
@@ -76,8 +76,8 @@ error() { _log ERR "$@" && exit 1; }
 silent() { "$@" >/dev/null 2>&1 </dev/null; }
 
 
-[ -x "$NATION_DUMP" ] || error "Dump script not found or not executable: %s" "$NATION_DUMP"
-[ -x "$NATION_FILTER" ] || error "Filter script not found or not executable: %s" "$NATION_FILTER"
+[ -x "$ORIGIN_DUMP" ] || error "Dump script not found or not executable: %s" "$ORIGIN_DUMP"
+[ -x "$ORIGIN_FILTER" ] || error "Filter script not found or not executable: %s" "$ORIGIN_FILTER"
 
 get_country() {
   case "$1" in
@@ -205,7 +205,7 @@ EOF
 
 
 for type; do
-  for code in $NATION_LANGUAGE; do
+  for code in $ORIGIN_LANGUAGE; do
     printf "%s" "$code" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
       error "Invalid language code format: %s" "$code"
     case "$type" in
@@ -243,12 +243,12 @@ for type; do
     esac
     export FILTER_KEYS FILTER_REGEX
     info "Dumping data for language %s with filter regex %s on keys" "$code" "$FILTER_REGEX" "$FILTER_KEYS"
-    FILTER_VERBOSE=$NATION_VERBOSE \
-    TMDB_VERBOSE=$NATION_VERBOSE \
-      "$NATION_DUMP" \
+    FILTER_VERBOSE=$ORIGIN_VERBOSE \
+    TMDB_VERBOSE=$ORIGIN_VERBOSE \
+      "$ORIGIN_DUMP" \
         -l "$code" \
-        -r "${NATION_DATA_ROOT%%/}" \
-        -f "$NATION_FILTER" \
+        -r "${ORIGIN_DATA_ROOT%%/}" \
+        -f "$ORIGIN_FILTER" \
           -- \
             "$type"
   done
