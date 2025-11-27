@@ -2,32 +2,63 @@
 
 The ultimate goal of this project is to generate [iCalendar] files with one-day events for selected celebrities.
 The project contains a series of POSIX shell scripts to collect and select data, and then generate calendars.
-Information is collected from data at [the Movie DB][tmdb].
+Information is collected from data at the [Movie DB][tmdb].
 You will need to [request] for an API key if you want to run those scripts by yourself.
-Available online is only a [calendar][person-fr] in French, with celebrities related to France.
+Available online is a [calendar][person-fr] in French, with celebrities related to France.
 This calendar is re-generated twice a week and contains one-day events for 10 days before and 10 days after the generation date.
 Regeneration uses a one-time [dump](#automated) of a selected subset from [TMDB][tmdb].
 
-While the purpose is generating calendars, scripts from this project are able to collect information about:
-persons, movies, TV series, collections, TV networks, Companies.
+While the project's purpose is generating calendars, scripts from this project are able to collect information about:
+persons, movies, TV series, collections, TV networks and companies.
 Language for the output can be changed from the command-line.
-[TMDB][tmdb] contains [millions] of entries.
+[TMDB][tmdb] contains [millions][dumps] of entries.
 Scripts such as [byorigin](#automated) or [dump](#dump-persons-names-and-bio) will restrict the subset saved to disk.
 
-I made this to break the uniformity of life for my mum.
+I made this to break up uniformity of life for my mum.
 She lives in an elderly care house and this information will be picked and shown on an eInk display.
 
   [iCalendar]: https://icalendar.org/
   [tmdb]: https://themovie.db/
   [request]: https://developer.themoviedb.org/docs/faq#how-do-i-apply-for-an-api-key
   [person-fr]: https://efrecon.github.io/tmdb-events/fr-FR/person.ics
-  [millions]: https://developer.themoviedb.org/docs/daily-id-exports
+  [dumps]: https://developer.themoviedb.org/docs/daily-id-exports
 
 ## Calendars
 
-Calenders are automatically generated for French-born person at the following locations.
+Calenders are automatically [generated][workflow] for French-born person:
+
+  [workflow]: ./.github/workflows/deploy.yml
 
 - [fr-FR][person-fr]
+
+Generation involved the following steps.
+This design is slightly cumbersome, but cleanly separate concerns.
+Each script implements a specific task, and they can be combined in different ways if necessary.
+
+1. Running the [`byorigin.sh`](./byorigin.sh).
+   It converts the locale given at the command-line into the relevant country, and language.
+   Country and language are in the target locale, so: "Français" for "French".
+2. [`dump.sh`](./dump.sh) is called from `byorigin.sh`.
+   It uses the daily [seeds][dumps] from TMDB to collect a list of all known and relevant entity identifiers.
+   An entity is a `person` or a `movie`, for example.
+   Data will be called in their original JSON format,
+   in a hierarchy containing first the locale, then the type.
+3. `dump.sh` will call [`filter.sh`](./filter.sh), for each downloaded entity, to detect if it should be saved to disk.
+   The filters have been setup by `byorigin.sh`, but it is possible to pick other [ones](#dump-persons-names-and-bio).
+   This process takes **several hours**, as the content of the *entire* database for an entity type needs to be fetched.
+   However, only relevant (filtered!) entities are saved to disk.
+4. [`ics.sh`](./ics.sh) generates a calendar for a given type and locale found on disk.
+   For the time being, `ics.sh` is only able to handle the `person` type.
+5. `ics.sh` uses [`select.sh`](./select.sh) to find persons that are born on a given date.
+   `select.sh` output their popularity and `ics.sh` will pick the person who is the most popular.
+6. Remaining data is picked from the data dumps using [`show.sh`](./show.sh).
+
+Data dump from step 3 can be pushed to a gist using [`gist.sh`](./gist.sh).
+This gist will contain a compressed `tar` archive, encoded in `base64`.
+One such [gist] is used to regenerate a calendar containing a shifting window from time to time.
+Regeneration happens through a GitHub [workflow].
+
+  [gist]: https://gist.github.com/efrecon/61e650e455723408bccde0dcb1d58825/raw/b60ae7be1fe37c1b1f7a88acdecef33e29646a89/person-fr-FR.tgz.b64
 
 ## Running
 
