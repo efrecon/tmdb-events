@@ -250,7 +250,7 @@ DTSTAMP:$(date -u +'%Y%m%dT%H%M%SZ')
 DTSTART;VALUE=DATE:$(date -u -d "$today" +'%Y%m%d')
 RRULE:FREQ=YEARLY;INTERVAL=1;BYMONTH=$month;BYMONTHDAY=$day
 X-MICROSOFT-CDO-ALLDAYEVENT:TRUE
-$(printf '%s:%s (%s)' "$(ics_localized "SUMMARY")" "$name" "$birthday" | ics_fold)
+$(printf '%s:%s, date de naissance: %s' "$(ics_localized "SUMMARY")" "$name" "$birthday" | ics_fold)
 $(printf '%s:%s' "$(ics_localized "DESCRIPTION")" "$bio" | ics_fold)
 URL:https://www.themoviedb.org/person/${id}
 STATUS:CONFIRMED
