@@ -25,7 +25,7 @@ jobs:
           mkdir -p ./data/person
           curl -fsSL --retry 5 --retry-delay 3 "$SEED" |
             base64 -d |
-            tar -xzvf - -C ./data/person
+            tar -xzvf - -C ./data/fr-FR/person
 
       - name: Generate Calendar
         run: |
