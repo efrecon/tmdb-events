@@ -35,7 +35,7 @@ Generation involved the following steps.
 This design is slightly cumbersome, but cleanly separate concerns.
 Each script implements a specific task, and they can be combined in different ways if necessary.
 
-1. Running the [`byorigin.sh`](./byorigin.sh).
+1. Run the [`byorigin.sh`](./byorigin.sh).
    It converts the locale given at the command-line into the relevant country, and language.
    Country and language are in the target locale, so: "Français" for "French".
 2. [`dump.sh`](./dump.sh) is called from `byorigin.sh`.
@@ -80,7 +80,7 @@ export TMDB_KEY
 To dump the entire TMDB knowledge about an entity type, e.g. `person` run a command similar to the following.
 This **is** a lengthy operation.
 Some care is taken as to not bump into rate limiting issues.
-Note that this changes the output language to french as an example, the default is `en-US`.
+Note that this changes the output locale to french as an example, the default is `en-US`.
 
 ```bash
 ./dump.sh -l fr-FR -v -- person
@@ -140,13 +140,13 @@ Generated JSON files are named after the identifiers of the entities.
 However, the following command will actively look for the id in all files in a directory resulting from above:
 
 ```bash
-./show.sh -k 'id' -- ./data/person
+./show.sh -k 'id' -- ./data/person/fr-FR
 ```
 
 #### Dump Person's names and bio
 
 ```bash
-./show.sh -k 'name biography' -- ./data/person
+./show.sh -k 'name biography' -- ./data/person/fr-FR
 ```
 
 #### Update Current Set
@@ -156,7 +156,7 @@ This will request again data for all already known persons.
 Note that these commands pinpoint the data directory for input and output on purpose to avoid mistakes.
 
 ```bash
-./show.sh -k 'id' -- ./data/person | ./dump.sh -l fr-FR -v -r ./data -- person
+./show.sh -k 'id' -- ./data/person/fr-FR | ./dump.sh -l fr-FR -v -r ./data -- person
 ```
 
 ### Searching for matching data
@@ -172,7 +172,7 @@ The example below would print all known persons born on the same day as today, a
 This works because the default is to print the keys that are used for the match.
 
 ```bash
-./select.sh -w 'birthday' -r "$(date +'%m-%d')\$" -- ./data/person
+./select.sh -w 'birthday' -r "$(date +'%m-%d')\$" -- ./data/person/fr-FR
 ```
 
 Selecting from a directory can be slow because it has to read all files from that directory and extract the value of the JSON keys for all files.
@@ -180,7 +180,7 @@ You can apply a pre-filter that enforces the **textual** content to match a regu
 In most cases, this pre-filter should be something that is very similar to regular expression to match, but without begin/end of string/line markers.
 
 ```bash
-./select.sh -w 'birthday' -q "$(date +'%m-%d')" -r "$(date +'%m-%d')\$" -- ./data/person
+./select.sh -w 'birthday' -q "$(date +'%m-%d')" -r "$(date +'%m-%d')\$" -- ./data/person/fr-FR
 ```
 
 #### Most popular person born today
@@ -189,11 +189,11 @@ The following command would show the most popular person born today.
 It works by requesting to show other keys, led by the popularity and sorting on that popularity score as a numerical value.
 
 ```bash
-./select.sh -k 'popularity birthday name' -q "$(date +'%m-%d')" -w 'birthday' -r "$(date +'%m-%d')\$" -- ./data/person |
+./select.sh -k 'popularity birthday name' -q "$(date +'%m-%d')" -w 'birthday' -r "$(date +'%m-%d')\$" -- ./data/person/fr-FR |
   sort -k 1 -g -r |
   head -n 1
 ```
 
 ## TODO
 
-+ Remove files where the biography is empty?
+- [ ] Remove files where the biography is empty?

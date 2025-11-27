@@ -14,10 +14,10 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # Pattern to match files to process in directories, e.g. "*.json"
 : "${GIST_PATTERN:="*.json"}"
 
-# Language of results.
-: "${GIST_LANGUAGE:="en-US"}"
+# Locale of results.
+: "${GIST_LOCALE:="en-US"}"
 
-# Description for the gist, Empty for a good default based on path and language.
+# Description for the gist, Empty for a good default based on path and locale.
 : "${GIST_DESCRIPTION:=""}"
 
 # Make the gist public. Default is private (false).
@@ -46,8 +46,8 @@ while getopts ":d:l:pt:vh-" opt; do
   case "$opt" in
     t) # GitHub PAT token with gist write access
       GIST_TOKEN=$OPTARG;;
-    l) # Language of results
-      GIST_LANGUAGE=$OPTARG;;
+    l) # Locale of results
+      GIST_LOCALE=$OPTARG;;
     d) # Description for the gist
       GIST_DESCRIPTION=$OPTARG;;
     p) # Make the gist public
@@ -107,8 +107,8 @@ api_curl() {
 
 
 silent command -v curl || error "curl command not found"
-printf "%s" "$GIST_LANGUAGE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
-  error "Invalid language code format: %s" "$GIST_LANGUAGE"
+printf "%s" "$GIST_LOCALE" | grep -qE '^[a-z]{2}(-\w{2})?$' || \
+  error "Invalid locale code format: %s" "$GIST_LOCALE"
 
 if [ "$GIST_PUBLIC" = "1" ]; then
   GIST_PUBLIC_JSON="true"
@@ -119,15 +119,15 @@ fi
 for type; do
   case "$type" in
     person|movie|tv|collection|network|keyword|company)
-      path="${GIST_DATA_ROOT%//}/${GIST_LANGUAGE}/${type}"
+      path="${GIST_DATA_ROOT%//}/${GIST_LOCALE}/${type}"
       if [ ! -d "$path" ]; then
         warn "Data path %s for type %s does not exist, skipping" "$path" "$type"
         continue
       fi
 
       _desc=$GIST_DESCRIPTION
-      [ -z "$_desc" ] && _desc="TMDB dump for $type in ${GIST_LANGUAGE}"
-      fname=${type}-${GIST_LANGUAGE}.tgz.b64
+      [ -z "$_desc" ] && _desc="TMDB dump for $type in ${GIST_LOCALE}"
+      fname=${type}-${GIST_LOCALE}.tgz.b64
       info "Compressing content of %s to upload to gist" "$path"
       b64=$(  ( cd "$path" && find . -maxdepth 1 -type f -name "$GIST_PATTERN" ) |
               sort -g |
