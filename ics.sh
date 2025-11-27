@@ -18,6 +18,11 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # Path to select.sh script to find persons.
 : "${ICS_SELECT:="${ICS_ROOTDIR%//}/select.sh"}"
 
+# Pick one of the first xx persons at random when multiple persons are found. 1
+# means pick the most popular one, negative or zero to pick at random from all
+# found.
+: "${ICS_TOP:=5}"
+
 # Number of days around today to include in the calendar. Default is 7 (one week
 # before and one week after today). When empty, the entire year is included.
 : "${ICS_DAYS:="7"}"
@@ -43,12 +48,14 @@ usage() {
 }
 
 # Parse named arguments using getopts
-while getopts ":d:l:r:vh-" opt; do
+while getopts ":d:l:p:r:vh-" opt; do
   case "$opt" in
     d) # Number of days around today to include in the calendar. Empty means entire year.
       ICS_DAYS=$OPTARG;;
     l) # Locale for entries in the calendar
       ICS_LOCALE=$OPTARG;;
+    p) # Pick at random one of the most random xx persons. 1 most popular, 0 or negative means from all.
+      ICS_TOP=$OPTARG;;
     r) # Root directory for downloaded data. Must contain one sub per locale, then one sub per type.
       ICS_DATA_ROOT=$OPTARG;;
     v) # Increase verbosity each time repeated
@@ -123,9 +130,16 @@ date_interval() {
 }
 
 
-# Pick the most popular person born on a given month-day.
+# Generate a random number between 0 and max-1
+# $1: max value (exclusive)
+random_number() {
+  awk -v max="$1" 'BEGIN{srand(); print int(rand()*max)}'
+}
+
+
+# Pick all persons born on a given month-day, sorted by popularity.
 # $1: month-day in MM-DD format
-most_popular_person() {
+popular_persons() {
   birthday=$1
   info "Picking most popular %s person born on %s" "$ICS_LOCALE" "$1"
   ICS_DATA_DIR="${ICS_DATA_ROOT%%/}/${ICS_LOCALE}/person"
@@ -136,9 +150,34 @@ most_popular_person() {
     -r "${1}\$" \
       -- \
         "$ICS_DATA_DIR" |
-      sort -k 1 -g -r |
-      head -n 1 |
-      cut -f2
+      sort -k 1 -g -r
+}
+
+
+# Pick the most popular person born on a given month-day.
+# $1: month-day in MM-DD format
+pick_popular_person() {
+  # Collect all persons born on the given month-day, sorted by popularity
+  persons=$(popular_persons "$1")
+
+  # Count them and decide how many to consider for random picking
+  count=$(printf '%s' "$persons" | wc -l | tr -d ' ')
+  if [ "$ICS_TOP" -le 0 ] || [ "$ICS_TOP" -ge "$count" ]; then
+    top=$count
+  else
+    top=$ICS_TOP
+  fi
+
+  # Pick one at random among the ones to consider
+  trace "Found %s persons born on %s, picking one among the top %s" "$count" "$1" "$top"
+  if [ "$top" -gt 1 ]; then
+    pick=$(random_number "$top")
+  else
+    pick=0
+  fi
+  printf '%s' "$persons" |
+    sed -n "$(( pick + 1 ))p" |
+    cut -f2
 }
 
 
@@ -226,7 +265,7 @@ EOF
 ics_entries() {
   while read -r d; do
     birthday=$(date -d "$d" +%m-%d)
-    path=$(most_popular_person "$birthday")
+    path=$(pick_popular_person "$birthday")
     [ -n "$path" ] && ics_entry "$path"
   done
 }
