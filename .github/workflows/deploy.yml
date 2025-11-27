@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '32 4 * * 1,4'
   workflow_dispatch:
 
 permissions:
@@ -14,6 +16,9 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    env:
+      LOCALE: fr_FR
+      TYPE: person
 
     steps:
       - name: Checkout repository
@@ -21,16 +26,16 @@ jobs:
 
       - name: Seed
         run: |
-          SEED=https://gist.github.com/efrecon/61e650e455723408bccde0dcb1d58825/raw/b60ae7be1fe37c1b1f7a88acdecef33e29646a89/person-fr-FR.tgz.b64
-          mkdir -p ./data/fr-FR/person
+          SEED=https://gist.github.com/efrecon/61e650e455723408bccde0dcb1d58825/raw/b60ae7be1fe37c1b1f7a88acdecef33e29646a89/${TYPE}-${LOCALE}.tgz.b64
+          mkdir -p ./data/${LOCALE}/${TYPE}
           curl -fsSL --retry 5 --retry-delay 3 "$SEED" |
             base64 -d |
-            tar -xzvf - -C ./data/fr-FR/person
+            tar -xzvf - -C ./data/${LOCALE}/${TYPE}
 
       - name: Generate Calendar
         run: |
-          mkdir -p ./ics/fr-FR
-          ./ics.sh -v -d "" -l "fr-FR" > ./ics/fr-FR/$(date +%Y).ics
+          mkdir -p ./ics/${LOCALE}
+          ./ics.sh -v -d 10 -l "${LOCALE}" > ./ics/${LOCALE}/${TYPE}.ics
 
       - name: Upload Pages
         uses: actions/upload-pages-artifact@v4
