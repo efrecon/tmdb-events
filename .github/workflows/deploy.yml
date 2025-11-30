@@ -35,7 +35,7 @@ jobs:
       - name: Generate Calendar
         run: |
           mkdir -p ./ics/${LOCALE}
-          ./ics.sh -v -d 10 -l "${LOCALE}" > "./ics/${LOCALE}/${TYPE}.ics"
+          ./ics.sh -v -d 10 -s 5 -l "${LOCALE}" > "./ics/${LOCALE}/${TYPE}.ics"
 
       - name: Upload Pages
         uses: actions/upload-pages-artifact@v4

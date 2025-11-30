@@ -32,6 +32,14 @@ if set -o | grep -q 'pipefail'; then set -o pipefail; fi
 # this is the default.
 : "${ICS_LOCALE:=""}"
 
+# Lines matching this regex will be removed from the content before being used.
+# Useful to remove source lines, e.g. "Source: Wikipedia" that are of importance
+# but repeat themselves over most entries.
+: "${ICS_CLEAN:="^Source:"}"
+
+# Number of sentences to include in the description. Default is 1.
+: "${ICS_SENTENCES:=1}"
+
 # Verbosity level, can be increased with -v option
 : "${ICS_VERBOSE:=0}"
 
@@ -48,7 +56,7 @@ usage() {
 }
 
 # Parse named arguments using getopts
-while getopts ":d:l:p:r:vh-" opt; do
+while getopts ":d:l:p:r:s:vh-" opt; do
   case "$opt" in
     d) # Number of days around today to include in the calendar. Empty means entire year.
       ICS_DAYS=$OPTARG;;
@@ -58,6 +66,8 @@ while getopts ":d:l:p:r:vh-" opt; do
       ICS_TOP=$OPTARG;;
     r) # Root directory for downloaded data. Must contain one sub per locale, then one sub per type.
       ICS_DATA_ROOT=$OPTARG;;
+    s) # Number of sentences to include in the description.
+      ICS_SENTENCES=$OPTARG;;
     v) # Increase verbosity each time repeated
       ICS_VERBOSE=$(( ICS_VERBOSE + 1 ));;
     h) # Show this help
@@ -220,6 +230,58 @@ EOF
 
 ics_fold() { fold -s -w 74 | sed 's/^/ /; 1s/^ //'; }
 
+first_sentences() {
+  awk -v N="${ICS_SENTENCES}" '
+BEGIN {
+  sentence_limit = N;
+  current_count = 0;  
+  # buffer will hold all accumulated text, including original newlines.
+  buffer = "";
+}
+
+{
+  # 1. Accumulate the input line-by-line, including the original newline character.
+  # This preserves the original formatting.
+  buffer = buffer $0 "\n";
+  
+  # Process the buffer continuously to find sentences and print them immediately
+  # until the limit is reached or no more sentences can be extracted from the current buffer.
+  while (current_count < sentence_limit) {
+      
+    # Try to find a sentence end pattern in the current buffer
+    if (match(buffer, /[\.?!][[:space:]]/)) {
+      # match() sets RSTART (start of punctuation) and RLENGTH (length of punctuation + whitespace)
+      
+      # The sentence chunk includes the punctuation AND the following whitespace/newline.
+      # We want the text up to RSTART + RLENGTH (inclusive).
+      sentence_end_index_inclusive = RSTART + RLENGTH - 1; 
+      
+      # Extract the sentence chunk, including all its original formatting
+      sentence_chunk = substr(buffer, 1, sentence_end_index_inclusive + 1);
+      
+      # Print the extracted chunk (printf "%s" preserves internal newlines)
+      printf "%s", sentence_chunk;
+      
+      current_count++;
+      
+      # Update the buffer to the remaining text 
+      buffer = substr(buffer, sentence_end_index_inclusive + 2);
+    } else {
+      # No full sentence found in the current accumulated buffer.
+      # Break the inner loop and continue reading the next line of input.
+      break;
+    }
+  }
+  
+  # If the sentence limit is reached, we stop reading input immediately to prevent
+  # reading or printing any part of the N+1 sentence, preserving only the first N.
+  if (current_count == sentence_limit) {
+    exit;
+  }
+}
+'
+}
+
 # Output an ICS entry for a given person file. Content will be pinpointed to the
 # locale if provided.
 # $1: path to person file
@@ -230,9 +292,12 @@ ics_entry() {
   birthday=$("$ICS_SHOW" -k 'birthday' -- "$1")
   id=$("$ICS_SHOW" -k 'id' -- "$1")
   name=$("$ICS_SHOW" -k 'name' -- "$1")
-  bio=$("$ICS_SHOW" -k 'biography' -- "$1" |
-        head -n 1 |
-        sed 's/\([^.!?]*[.!?]\).*/\1/')
+  if [ -z "$ICS_SENTENCES" ] || [ "$ICS_SENTENCES" -le 0 ]; then
+    bio=
+  else
+    bio=$(  "$ICS_SHOW" -k 'biography' -c "$ICS_CLEAN" -- "$1" |
+            first_sentences )
+  fi
 
   # Extract month and day from birthday to setup the yearly recurrence and when
   # the event starts and stops.

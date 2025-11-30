@@ -33,7 +33,7 @@ usage() {
 }
 
 # Parse named arguments using getopts
-while getopts ":k:vh-" opt; do
+while getopts ":c:k:vh-" opt; do
   case "$opt" in
     k) # List of keys to extract from each file, space separated.
       SHOW_KEYS=$OPTARG;;
