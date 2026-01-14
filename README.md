@@ -12,7 +12,7 @@ While the project's purpose is generating calendars, scripts from this project a
 persons, movies, TV series, collections, TV networks and companies.
 Language for the output can be changed from the command-line.
 [TMDB][tmdb] contains [millions][dumps] of entries.
-Scripts such as [byorigin](#automated) or [dump](#dump-persons-names-and-bio) will restrict the subset saved to disk.
+Scripts such as [from](#automated) or [dump](#dump-persons-names-and-bio) will restrict the subset saved to disk.
 
 I made this to break up uniformity of life for my mum.
 She lives in an elderly care house and this information will be picked and shown on an eInk display.
@@ -35,16 +35,16 @@ Generation involved the following steps.
 This design is slightly cumbersome, but cleanly separate concerns.
 Each script implements a specific task, and they can be combined in different ways if necessary.
 
-1. Run the [`byorigin.sh`](./byorigin.sh).
+1. Run the [`from.sh`](./from.sh).
    It converts the locale given at the command-line into the relevant country, and language.
    Country and language are in the target locale, so: "Français" for "French".
-2. [`dump.sh`](./dump.sh) is called from `byorigin.sh`.
+2. [`dump.sh`](./dump.sh) is called from `from.sh`.
    It uses the daily [seeds][dumps] from TMDB to collect a list of all known and relevant entity identifiers.
    An entity is a `person` or a `movie`, for example.
    Data will be called in their original JSON format,
    in a hierarchy containing first the locale, then the type.
 3. `dump.sh` will call [`filter.sh`](./filter.sh), for each downloaded entity, to detect if it should be saved to disk.
-   The filters have been setup by `byorigin.sh`, but it is possible to pick other [ones](#dump-persons-names-and-bio).
+   The filters have been setup by `from.sh`, but it is possible to pick other [ones](#dump-persons-names-and-bio).
    This process takes **several hours**, as the content of the *entire* database for an entity type needs to be fetched.
    However, only relevant (filtered!) entities are saved to disk.
 4. [`ics.sh`](./ics.sh) generates a calendar for a given type and locale found on disk.
@@ -117,16 +117,16 @@ export FILTER_KEYS FILTER_REGEX
 
 #### Automated
 
-Automatically originating TMDB entities to their origing can be automated through `byorigin.sh` instead.
+Automatically originating TMDB entities to their origing can be automated through `from.sh` instead.
 To only dump persons born in France and French-speaking countries nearby, do as follows instead.
 This will resolve the locale to a relevant filter -- same as above for France,
 and then run `dump.sh` using that filter.
-`byorigin.sh` is able to take several locales and several types.
+`from.sh` is able to take several locales and several types.
 Note that this is a **lengthy** -- several hours -- operation,
 as it needs to download the entire database for each pass.
 
 ```bash
-./byorigin.sh -l fr-FR -v -- person
+./from.sh -l fr-FR -v -- person
 ```
 
 ### Extract Results
